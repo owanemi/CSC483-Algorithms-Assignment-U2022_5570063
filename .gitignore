@@ -1,0 +1,25 @@
+# Compiled output
+target/
+*.class
+*.jar
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+nbproject/
+nbactions.xml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Maven wrapper
+.mvn/
+mvnw
+mvnw.cmd
