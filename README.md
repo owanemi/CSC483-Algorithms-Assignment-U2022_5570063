@@ -7,114 +7,150 @@
 
 ---
 
+## Requirements
+
+- Java 11 or higher (just the JDK, nothing else)
+- No build tools, no external libraries, no Maven, no Gradle
+
+Check your Java version with:
+```
+java -version
+javac -version
+```
+
+---
+
 ## Project Structure
 
 ```
-src/
-  main/java/com/csc483/
-    assignment1/search/
-      Product.java            - Product data class
-      SearchEngine.java       - Sequential, binary, hybrid search + addProduct
-      DataGenerator.java      - Generates and writes product datasets
-      TechMartBenchmark.java  - Main benchmark program for Question 1
-    assignment2/sorting/
-      Sorter.java             - Interface for all sorting algorithms
-      InsertionSort.java
-      MergeSort.java
-      QuickSort.java
-      SortingDataGenerator.java - Generates test arrays of various types
-      SortingBenchmark.java   - Main benchmark program for Question 2
-  test/java/com/csc483/
-    assignment1/
-      SearchEngineTest.java   - JUnit 5 tests for Question 1
-    assignment2/
-      SortingAlgorithmsTest.java - JUnit 5 tests for Question 2
-datasets/
-  products_100k.csv           - 100,000 product records (generated on first run)
-  sort_random_1000.txt        - Random integer dataset, size 1000
-  sort_sorted_1000.txt        - Sorted integer dataset, size 1000
-  sort_reverse_1000.txt       - Reverse-sorted integer dataset, size 1000
-  sort_nearly_1000.txt        - Nearly sorted integer dataset, size 1000
-  sort_dupes_1000.txt         - Many-duplicates integer dataset, size 1000
+CSC483-Algorithms-Assignment-U20225570063/
+├── compile.sh              - compiles everything
+├── run_tests.sh            - runs all tests
+├── run_benchmarks.sh       - runs both benchmark programs
+├── datasets/               - sample input files committed to the repo
+│   ├── sort_random_1000.txt
+│   ├── sort_sorted_1000.txt
+│   ├── sort_reverse_1000.txt
+│   ├── sort_nearly_1000.txt
+│   └── sort_dupes_1000.txt
+└── src/
+    ├── main/java/com/csc483/
+    │   ├── assignment1/search/
+    │   │   ├── Product.java
+    │   │   ├── SearchEngine.java
+    │   │   ├── DataGenerator.java
+    │   │   └── TechMartBenchmark.java
+    │   └── assignment2/sorting/
+    │       ├── Sorter.java
+    │       ├── InsertionSort.java
+    │       ├── MergeSort.java
+    │       ├── QuickSort.java
+    │       ├── SortingDataGenerator.java
+    │       └── SortingBenchmark.java
+    └── test/java/com/csc483/
+        ├── test/
+        │   ├── Assert.java       - assertion helpers (replaces JUnit assertions)
+        │   ├── TestRunner.java   - runs test methods by reflection
+        │   └── RunAllTests.java  - entry point that runs all suites
+        ├── assignment1/
+        │   └── SearchEngineTest.java
+        └── assignment2/
+            └── SortingAlgorithmsTest.java
 ```
 
 ---
 
-## Dependencies
+## Step 1: Compile
 
-- Java 11 or higher
-- Maven 3.6 or higher
-- JUnit 5.10 (pulled automatically by Maven)
+On Linux/Mac:
+```bash
+chmod +x compile.sh run_tests.sh run_benchmarks.sh
+./compile.sh
+```
+
+On Windows (Command Prompt — enable delayed expansion first):
+```bat
+mkdir out
+for /r src\main\java %%f in (*.java) do javac -d out "%%f"
+for /r src\test\java %%f in (*.java) do javac -cp out -d out "%%f"
+```
+
+Or manually on any OS:
+```bash
+find src/main/java -name "*.java" | xargs javac -d out
+find src/test/java -name "*.java" | xargs javac -cp out -d out
+```
 
 ---
 
-## Compilation
+## Step 2: Run the Tests
 
 ```bash
-mvn compile
+./run_tests.sh
+```
+
+Or manually:
+```bash
+java -cp out com.csc483.test.RunAllTests
+```
+
+Expected output:
+```
+============================================================
+Running: SearchEngineTest
+============================================================
+  PASS  testProductConstructorStoresAllFields
+  PASS  testProductRejectsBlankName
+  ...
+Results: 34 passed, 0 failed
+
+============================================================
+Running: SortingAlgorithmsTest
+============================================================
+  PASS  testSortRandomSmallArray
+  PASS  testSortAlreadySorted
+  ...
+Results: 20 passed, 0 failed
+```
+
+You can also run each suite individually:
+```bash
+java -cp out com.csc483.assignment1.SearchEngineTest
+java -cp out com.csc483.assignment2.SortingAlgorithmsTest
 ```
 
 ---
 
-## Running the Tests
+## Step 3: Run the Benchmarks
 
 ```bash
-mvn test
+./run_benchmarks.sh
 ```
 
-All tests should pass. The test suite covers correctness, edge cases (empty arrays, null inputs, single elements, duplicates), counter behaviour, and agreement between algorithms.
+Or individually:
+```bash
+java -cp out com.csc483.assignment1.search.TechMartBenchmark
+java -cp out com.csc483.assignment2.sorting.SortingBenchmark
+```
+
+Running `TechMartBenchmark` also generates `datasets/products_100k.csv`. This file is large so it is not committed to the repository; it is recreated on each run.
 
 ---
 
-## Running the Benchmarks
+## How the Test Framework Works
 
-**Question 1 - TechMart Search Benchmark:**
+There is no JUnit or any third-party library. The test framework is three small files inside `src/test/java/com/csc483/test/`:
 
-```bash
-mvn exec:java -Dexec.mainClass="com.csc483.assignment1.search.TechMartBenchmark"
-```
+- `Assert.java` provides `assertEquals`, `assertNotNull`, `assertNull`, `assertTrue`, `assertThrows`, and `assertArrayEquals`. Each throws a standard Java `AssertionError` on failure, the same way JUnit does internally.
+- `TestRunner.java` uses Java reflection to find every method whose name starts with `test`, calls `setUp()` before each one, runs it, and prints PASS or FAIL with the failure message.
+- `RunAllTests.java` is the entry point that creates one instance of each test class and calls `run()`.
 
-This generates `datasets/products_100k.csv` and prints a performance comparison table to stdout.
-
-**Question 2 - Sorting Benchmark:**
-
-```bash
-mvn exec:java -Dexec.mainClass="com.csc483.assignment2.sorting.SortingBenchmark"
-```
-
-This generates dataset files under `datasets/` and prints comparison tables for all data types and input sizes.
-
----
-
-## Sample Output
-
-```
-================================================================
-TECHMART SEARCH PERFORMANCE ANALYSIS (n = 100,000 products)
-================================================================
-
-SEQUENTIAL SEARCH:
-  Best Case  (ID at position 0)  : 0.023 ms
-  Average Case (random ID)       : 45.678 ms
-  Worst Case (ID not found)      : 89.345 ms
-
-BINARY SEARCH:
-  Best Case  (ID at middle)      : 0.001 ms
-  Average Case (random ID)       : 0.089 ms
-  Worst Case (ID not found)      : 0.092 ms
-
-PERFORMANCE IMPROVEMENT: Binary search is ~500x faster on average
-
-HYBRID NAME SEARCH:
-  Average search time : 0.002 ms
-  Average insert time : 0.134 ms
-================================================================
-```
+No annotations, no external jars, nothing to install.
 
 ---
 
 ## Known Limitations
 
-- `addProduct` uses array shifting (O(n) per insert). For high-frequency insertions a TreeMap-backed structure would be more efficient.
-- Benchmark timings depend on JVM warm-up. Results may vary between runs, especially at small input sizes.
-- The products dataset uses randomly generated IDs, so duplicates are possible in the raw array before sorting.
+- `addProduct` uses array shifting (O(n) per insert). For write-heavy workloads a `TreeMap` would be more efficient.
+- Benchmark timings vary between runs due to JVM warm-up. The numbers are most reliable at large input sizes (n = 100,000).
+- The products dataset uses randomly generated IDs so duplicates are possible before the array is sorted.
